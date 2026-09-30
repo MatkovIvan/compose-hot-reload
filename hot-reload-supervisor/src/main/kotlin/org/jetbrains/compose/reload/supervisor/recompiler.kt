@@ -5,12 +5,14 @@
 
 @file:OptIn(ExperimentalTime::class)
 
-package org.jetbrains.compose.devtools
+package org.jetbrains.compose.reload.supervisor
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import org.jetbrains.compose.devtools.api.RecompilerExtension
+import org.jetbrains.compose.reload.InternalHotReloadApi
+import org.jetbrains.compose.reload.core.Disposable
 import org.jetbrains.compose.reload.core.Environment
 import org.jetbrains.compose.reload.core.ExitCode
 import org.jetbrains.compose.reload.core.Future
@@ -28,9 +30,11 @@ import org.jetbrains.compose.reload.core.invokeOnError
 import org.jetbrains.compose.reload.core.invokeOnFinish
 import org.jetbrains.compose.reload.core.isFailure
 import org.jetbrains.compose.reload.core.launchTask
+import org.jetbrains.compose.reload.orchestration.OrchestrationHandle
 import org.jetbrains.compose.reload.orchestration.OrchestrationMessage.RecompileRequest
 import org.jetbrains.compose.reload.orchestration.OrchestrationMessage.RecompileResult
 import org.jetbrains.compose.reload.orchestration.asChannel
+import org.jetbrains.compose.reload.supervisor.gradle.GradleRecompiler
 import java.util.ServiceLoader
 import kotlin.time.ExperimentalTime
 
@@ -38,8 +42,14 @@ private val logger = createLogger()
 
 private val recompilerThread = WorkerThread("Recompiler", isDaemon = false)
 
+/**
+ * @param invokeOnShutdown Registers an action which is invoked when the process shuts down
+ */
+@InternalHotReloadApi
 @OptIn(ExperimentalCoroutinesApi::class)
-internal fun launchRecompiler(): Future<Unit> = launchTask("Recompiler", recompilerThread.dispatcher) task@{
+fun launchRecompiler(
+    orchestration: OrchestrationHandle, invokeOnShutdown: (action: () -> Unit) -> Disposable,
+): Future<Unit> = launchTask("Recompiler", recompilerThread.dispatcher) task@{
     val messages = orchestration.asChannel()
 
     invokeOnError { error ->
@@ -60,6 +70,10 @@ internal fun launchRecompiler(): Future<Unit> = launchTask("Recompiler", recompi
 
     logger.debug("Recompiler created: '${recompiler.name}'")
 
+    if (recompiler is GradleRecompiler && HotReloadEnvironment.gradleWarmupEnabled) {
+        orchestration.send(RecompileRequest())
+    }
+
     suspend fun runBuild(requests: List<RecompileRequest>): Try<ExitCode?> {
         logger.info("Running '${recompiler.name}'...")
         val context = RecompilerContextImpl(
@@ -68,7 +82,7 @@ internal fun launchRecompiler(): Future<Unit> = launchTask("Recompiler", recompi
         )
 
         val exitCode = Try {
-            withDisposableShutdownHook(context) {
+            withDisposableShutdownHook(context, invokeOnShutdown) {
                 useDisposableStoppable(context) {
                     recompiler.buildAndReload(context)
                 }
@@ -87,14 +101,14 @@ internal fun launchRecompiler(): Future<Unit> = launchTask("Recompiler", recompi
         // recompiles/reloads on its own, it never returns until shutdown. So we run it once and respond with
         // an immediate result on any recompile request.
         subtask("${recompiler.name} (continuous)", recompilerThread.dispatcher) { runBuild(emptyList()) }
-        requests.collect { request -> RecompileResult(request.messageId, 0).send() }
+        requests.collect { request -> orchestration.send(RecompileResult(request.messageId, 0)) }
     } else {
         // Non-continuous mode: each (batch of) request triggers one build that compiles, reloads if
         // needed, and exits. We wait for that build and report its exit code back to every request.
         requests.conflateAsList().collect { pendingRequests ->
             val exitCode = runBuild(pendingRequests)
             pendingRequests.forEach { request ->
-                RecompileResult(request.messageId, exitCode.getOrNull()?.code).send()
+                orchestration.send(RecompileResult(request.messageId, exitCode.getOrNull()?.code))
             }
         }
     }

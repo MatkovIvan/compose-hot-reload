@@ -3,10 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package org.jetbrains.compose.devtools
+package org.jetbrains.compose.reload.supervisor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.reload.InternalHotReloadApi
 import org.jetbrains.compose.reload.core.HotReloadEnvironment
 import org.jetbrains.compose.reload.core.createLogger
 import org.jetbrains.compose.reload.core.info
@@ -17,9 +18,8 @@ import kotlin.io.path.absolutePathString
 
 private val logger = createLogger()
 
-internal fun CoroutineScope.launchRestartActor(
-    orchestration: OrchestrationHandle = org.jetbrains.compose.devtools.orchestration
-) = launch {
+@InternalHotReloadApi
+fun CoroutineScope.launchRestartActor(orchestration: OrchestrationHandle) = launch {
     orchestration.messages.withType<OrchestrationMessage.RestartRequest>().collect {
         logger.info("Restarting...")
 
@@ -44,6 +44,6 @@ internal fun CoroutineScope.launchRestartActor(
         processBuilder.start()
 
         logger.info("New process started; Exiting")
-        OrchestrationMessage.ShutdownRequest("Requested by user through 'devtools'").send()
+        orchestration.send(OrchestrationMessage.ShutdownRequest("Requested by user through 'devtools'"))
     }
 }

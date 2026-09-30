@@ -37,6 +37,7 @@ tasks.withType<JavaCompile>().configureEach {
 dependencies {
     implementation(compose.runtime)
     implementation(project(":hot-reload-devtools-api"))
+    implementation(project(":hot-reload-supervisor"))
 
     implementation(project(":hot-reload-core"))
     implementation(project(":hot-reload-orchestration"))

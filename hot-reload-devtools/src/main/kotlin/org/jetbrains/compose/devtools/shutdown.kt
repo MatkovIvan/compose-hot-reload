@@ -20,6 +20,7 @@ import org.jetbrains.compose.reload.core.isSuccess
 import org.jetbrains.compose.reload.core.launchTask
 import org.jetbrains.compose.reload.orchestration.OrchestrationClientRole
 import org.jetbrains.compose.reload.orchestration.OrchestrationMessage.CriticalException
+import org.jetbrains.compose.reload.supervisor.supervisorLoggingQueue
 import java.nio.file.Path
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.io.path.bufferedWriter
@@ -126,7 +127,7 @@ private object ShutdownThread : Thread("shutdown") {
 
         /* Take all undispatched logs and append them to the shutdown logs */
         while (true) {
-            val log = devtoolsLoggingQueue.nextOrNull().leftOrNull() ?: break
+            val log = supervisorLoggingQueue.nextOrNull().leftOrNull() ?: break
             shutdownReportWriter?.appendLine(log.displayString(useEffects = false))
         }
 

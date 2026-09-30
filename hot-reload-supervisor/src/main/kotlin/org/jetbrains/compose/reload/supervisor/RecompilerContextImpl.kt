@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package org.jetbrains.compose.devtools
+package org.jetbrains.compose.reload.supervisor
 
 import org.jetbrains.compose.devtools.api.RecompilerContext
 import org.jetbrains.compose.reload.core.Disposable

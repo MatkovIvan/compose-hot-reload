@@ -81,6 +81,13 @@
         },
         {
           "group": "org.jetbrains.compose.hot-reload",
+          "module": "hot-reload-supervisor",
+          "version": {
+            "requires": "{{Hot Reload Version}}"
+          }
+        },
+        {
+          "group": "org.jetbrains.compose.hot-reload",
           "module": "hot-reload-core",
           "version": {
             "requires": "{{Hot Reload Version}}"

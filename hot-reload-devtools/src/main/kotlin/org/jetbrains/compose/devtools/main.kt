@@ -25,6 +25,8 @@ import org.jetbrains.compose.devtools.states.launchReloadUIState
 import org.jetbrains.compose.devtools.states.launchWindowsUIState
 import org.jetbrains.compose.reload.core.createLogger
 import org.jetbrains.compose.reload.core.debug
+import org.jetbrains.compose.reload.supervisor.launchRecompiler
+import org.jetbrains.compose.reload.supervisor.launchRestartActor
 
 internal val applicationScope = CoroutineScope(Dispatchers.Main + SupervisorJob() + Events() + States())
 
@@ -49,7 +51,7 @@ internal fun CoroutineScope.launchApplicationStates() {
 
     launchBuildModeStateActor()
 
-    launchRestartActor()
+    launchRestartActor(orchestration)
     launchNotificationsUIState()
 }
 
@@ -60,7 +62,7 @@ fun main() {
 
     logger.debug("Starting application states")
     applicationScope.launchApplicationStates()
-    launchRecompiler()
+    launchRecompiler(orchestration, ::invokeOnShutdown)
 
     logger.debug("Starting UI")
     startDevToolsUI()

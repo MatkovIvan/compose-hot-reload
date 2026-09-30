@@ -3,18 +3,16 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package org.jetbrains.compose.devtools.gradle
+package org.jetbrains.compose.reload.supervisor.gradle
 
 import org.jetbrains.compose.devtools.api.Recompiler
 import org.jetbrains.compose.devtools.api.RecompilerExtension
-import org.jetbrains.compose.devtools.sendAsync
 import org.jetbrains.compose.reload.core.BuildSystem.Gradle
 import org.jetbrains.compose.reload.core.HotReloadEnvironment
 import org.jetbrains.compose.reload.core.HotReloadEnvironment.gradleBuildRoot
 import org.jetbrains.compose.reload.core.createLogger
 import org.jetbrains.compose.reload.core.debug
 import org.jetbrains.compose.reload.core.error
-import org.jetbrains.compose.reload.orchestration.OrchestrationMessage
 import java.nio.file.Path
 
 internal class GradleRecompilerExtension : RecompilerExtension {
@@ -39,11 +37,6 @@ internal class GradleRecompilerExtension : RecompilerExtension {
 
         if (HotReloadEnvironment.gradleOfflineMode) {
             logger.debug("offline mode detected")
-        }
-
-        /* Side Effect */
-        if (HotReloadEnvironment.gradleWarmupEnabled) {
-            OrchestrationMessage.RecompileRequest().sendAsync()
         }
 
         return GradleRecompiler(

@@ -29,6 +29,7 @@ import org.jetbrains.compose.reload.orchestration.asFlow
 import org.jetbrains.compose.reload.orchestration.connectAllOrchestrationListeners
 import org.jetbrains.compose.reload.orchestration.connectBlocking
 import org.jetbrains.compose.reload.orchestration.startOrchestrationServer
+import org.jetbrains.compose.reload.supervisor.startLoggingDispatch
 import java.util.ServiceLoader
 import kotlin.time.Duration.Companion.seconds
 
