@@ -45,18 +45,25 @@ internal val Project.composeHotReloadDevToolsConfiguration: Configuration
             )
 
             configuration.dependencies.add(
-                project.dependencies.create("org.jetbrains.compose.hot-reload:hot-reload-devtools:$HOT_RELOAD_VERSION")
+                project.dependencies.create("org.jetbrains.compose.hot-reload:hot-reload-supervisor:$HOT_RELOAD_VERSION")
             )
 
-            /**
-             * Add the desktop dependency for the currentOs!
-             * The devtools need to have a suitable runtime (for the host) available.
-             * This runtime is not published as a dependency to the devtools because windows will need a different
-             * runtime from, let's say macOS.
-             */
-            project.dependencies {
-                configuration(ComposePlugin.Dependencies(project).desktop.currentOs) {
-                    version { constraint -> constraint.strictly(HOT_RELOAD_COMPOSE_VERSION) }
+            /* The 'devtools' application requires Compose UI: Without it, the supervisor runs on its own */
+            project.withComposePlugin {
+                configuration.dependencies.add(
+                    project.dependencies.create("org.jetbrains.compose.hot-reload:hot-reload-devtools:$HOT_RELOAD_VERSION")
+                )
+
+                /**
+                 * Add the desktop dependency for the currentOs!
+                 * The devtools need to have a suitable runtime (for the host) available.
+                 * This runtime is not published as a dependency to the devtools because windows will need a different
+                 * runtime from, let's say macOS.
+                 */
+                project.dependencies {
+                    configuration(ComposePlugin.Dependencies(project).desktop.currentOs) {
+                        version { constraint -> constraint.strictly(HOT_RELOAD_COMPOSE_VERSION) }
+                    }
                 }
             }
         }

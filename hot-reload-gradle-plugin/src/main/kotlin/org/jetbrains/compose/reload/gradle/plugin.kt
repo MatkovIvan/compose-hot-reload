@@ -20,7 +20,7 @@ class ComposeHotReloadPlugin : Plugin<Project> {
             target.extensions.create(composeHotReloadExtensionName, ComposeHotReloadExtension::class.java, target)
 
             /* Defend further configuration against situations where collaborative plugin access is not available */
-            if (!target.hasComposePluginAccess()) return
+            if (target.pluginManager.hasPlugin("org.jetbrains.compose") && !target.hasComposePluginAccess()) return
             if (!target.hasKotlinPluginAccess()) return
 
             /* Launch future configurations */

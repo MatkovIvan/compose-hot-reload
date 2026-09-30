@@ -41,7 +41,10 @@ val Project.composeHotReloadRuntimeConfiguration: Configuration
             configuration.attributes.attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(COMPOSE_DEV_RUNTIME_USAGE))
             configuration.attributes.attribute(HotReloadUsageType.attribute, HotReloadUsageType.Dev)
 
-            project.dependencies.add(
-                configuration.name, "org.jetbrains.compose.hot-reload:hot-reload-runtime-jvm:$HOT_RELOAD_VERSION"
-            )
+            /* 'hot-reload-runtime-jvm' integrates Compose UI */
+            project.withComposePlugin {
+                project.dependencies.add(
+                    configuration.name, "org.jetbrains.compose.hot-reload:hot-reload-runtime-jvm:$HOT_RELOAD_VERSION"
+                )
+            }
         }

@@ -9,6 +9,7 @@ package org.jetbrains.compose.reload
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.currentRecomposeScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
 import org.jetbrains.compose.reload.agent.invokeAfterHotReload
@@ -32,7 +33,24 @@ public actual fun DevelopmentEntryPoint(child: @Composable () -> Unit) {
     }
 
     /* Forward the call to the runtime-jvm module */
-    org.jetbrains.compose.reload.jvm.DevelopmentEntryPoint(child = child)
+    if (isRuntimeJvmAvailable) {
+        org.jetbrains.compose.reload.jvm.DevelopmentEntryPoint(child = child)
+        return
+    }
+
+    /*
+    Compose recomposes a reloaded group by invalidating the closest used recompose scope above it.
+    The content of the application might not have such a scope: Reading the scope of this entry point provides it.
+     */
+    currentRecomposeScope
+    child()
+}
+
+/**
+ * The runtime-jvm module integrates Compose UI and is available only in Compose Multiplatform applications.
+ */
+private val isRuntimeJvmAvailable: Boolean by lazy {
+    runCatching { Class.forName("org.jetbrains.compose.reload.jvm.JvmDevelopmentEntryPoint") }.isSuccess
 }
 
 @DelicateHotReloadApi

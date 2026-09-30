@@ -33,7 +33,7 @@ JetBrains open-source project enabling instant UI code changes without restartin
 | `hot-reload-annotations` | Kotlin annotations for hot reload API                                                                                 |
 | `hot-reload-analysis` | Bytecode analysis that determines dirty Compose scopes/groups that should be invalidated after reload                 |
 | `hot-reload-devtools` | Developer tools UI window                                                                                             |
-| `hot-reload-supervisor` | Recompiler and process lifecycle of the devtools                                                                      |
+| `hot-reload-supervisor` | Recompiler and process lifecycle of the devtools; runs on its own without the Compose Multiplatform Gradle plugin     |
 | `hot-reload-mcp` | MCP server for AI agent integration                                                                                   |
 | `hot-reload-test` | Test infrastructure and test plugins                                                                                  |
 | `tests/` | Functional integration tests                                                                                          |

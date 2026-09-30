@@ -19,6 +19,8 @@ import org.jetbrains.compose.reload.core.issueNewDebugSessionJvmArguments
 import org.jetbrains.compose.reload.core.subprocessSystemProperties
 import org.jetbrains.compose.reload.core.withHotReloadEnvironmentVariables
 import java.io.File
+import java.net.URLClassLoader
+import java.nio.file.Path
 import kotlin.concurrent.thread
 import kotlin.io.path.absolutePathString
 
@@ -49,7 +51,7 @@ private fun tryStartDevToolsProcess(): DevToolsHandle? {
         "-cp", classpath.joinToString(File.pathSeparator),
         *subprocessSystemProperties(DevTools).toTypedArray(),
         *issueNewDebugSessionJvmArguments("DevTools"),
-        "org.jetbrains.compose.devtools.Main",
+        resolveDevToolsMainClass(classpath),
     )
         .withHotReloadEnvironmentVariables(DevTools)
         .start()
@@ -71,6 +73,17 @@ private fun tryStartDevToolsProcess(): DevToolsHandle? {
         .first().substringAfter("=").trim().toInt()
 
     return DevToolsHandle(orchestrationPort)
+}
+
+/**
+ * The supervisor runs on its own if the 'devtools' application is not in the [classpath].
+ */
+private fun resolveDevToolsMainClass(classpath: List<Path>): String {
+    val urls = classpath.map { path -> path.toUri().toURL() }.toTypedArray()
+    val hasDevTools = URLClassLoader(urls, null).use { loader ->
+        loader.findResource("org/jetbrains/compose/devtools/Main.class") != null
+    }
+    return if (hasDevTools) "org.jetbrains.compose.devtools.Main" else "org.jetbrains.compose.reload.supervisor.Main"
 }
 
 private fun resolveDevtoolsJavaBinary(): String {
